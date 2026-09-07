@@ -8,6 +8,7 @@ More GPUs support soon (next will be NVIDIA)
 ### Status:
 
 > *light-node.cpp » pre-alpha, v0.01*
+
 > *Plotter.cpp » Possibly some, Future changed should only include New devices supports! v1.0.0*
 
 ### What is the light-node supposed to do?

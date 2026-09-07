@@ -1,3 +1,5 @@
+# 🌱 CCPoC Plotter, Lets mine! :3
+
 ![Intel Arc](https://img.shields.io/badge/Intel%20Arc-Supported-0068B5?style=for-the-badge&logo=intel&logoColor=white)
 
 Plotter with Intel Arc Support (tested with ARC a310).

@@ -5,13 +5,13 @@
 ![AMD](https://img.shields.io/badge/AMD-Not%20Supported-ED1C24?style=for-the-badge&labelColor=24292e)
 
 Plotter with Intel Arc Support (tested with ARC a310).
-More GPUs support soon (next will be NVIDIA)
+AMD Support Next Patch
 
 ### Status:
 
 > *light-node.cpp » pre-alpha, v0.01* (USELESS)
 
-> *Plotter.cpp » Possibly some, Future changed should only include New devices supports! v1.0.0*
+> *Plotter.cpp » Possibly done, Future changes should include AMD GPUs support! v1.0.1*
 
 ### What is the light-node supposed to do?
 

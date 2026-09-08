@@ -16,6 +16,10 @@
 ![GitHub stars](https://img.shields.io/github/stars/seilaman2210-rgb/CCPOC-MINER-CPP.svg)
 ![GitHub forks](https://img.shields.io/github/forks/seilaman2210-rgb/CCPOC-MINER-CPP.svg)
 
+------------------------------------------ About Chain ------------------------------------------
+
+![Chain Height](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fseed1.chocohub.org%2Fapi%2Fstats&label=chain%20height&query=%24.height&color=blue)
+
 Plotter with Intel Arc Support (tested with ARC a310).
 AMD Support Next Patch
 

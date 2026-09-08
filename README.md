@@ -13,6 +13,7 @@
 ![GitHub release](https://img.shields.io/github/release/seilaman2210-rgb/CCPOC-MINER-CPP/all.svg)
 ![GitHub Release Date](https://img.shields.io/github/release-date/seilaman2210-rgb/CCPOC-MINER-CPP.svg)
 ![GitHub license](https://img.shields.io/github/license/seilaman2210-rgb/CCPOC-MINER-CPP.svg)
+
 ![GitHub stars](https://img.shields.io/github/stars/seilaman2210-rgb/CCPOC-MINER-CPP.svg)
 ![GitHub forks](https://img.shields.io/github/forks/seilaman2210-rgb/CCPOC-MINER-CPP.svg)
 

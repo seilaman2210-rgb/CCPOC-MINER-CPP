@@ -1,4 +1,5 @@
 # 🌱 CCPoC Plotter, Lets mine! :3
+--------------------------------------------------- GPU ------------------------------------------------- ----------- CPU -----------
 
 ![Intel Arc](https://img.shields.io/badge/Intel%20Arc-Supported-0068B5?style=for-the-badge&labelColor=24292e)
 ![NVIDIA](https://img.shields.io/badge/NVIDIA-Supported-41b034?style=for-the-badge&labelColor=24292e)

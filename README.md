@@ -20,7 +20,7 @@ AMD Support Next Patch
 
 > ./plotter_cpu <size in gb> <threads>
 
-e.g. "./plotter 1 8"
+e.g. "./plotter_cpu 1 8"
 
 *Now just wait for plot to generate!*
 

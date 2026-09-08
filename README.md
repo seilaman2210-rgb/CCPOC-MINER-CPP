@@ -14,9 +14,9 @@ AMD Support Next Patch
 
 ### How to run:
 
-> *Download the latest release, and run:*
+*Download the latest release, and run:*
 
->> ./plotter (size in gb)
+> ./plotter (size in gb)
 
 e.g. "./plotter 1"
 

@@ -10,8 +10,6 @@ AMD Support Next Patch
 
 ### Status:
 
-> *light-node.cpp » pre-alpha, v0.01* (USELESS)
-
 > *Plotter.cpp » Possibly done, Future changes should include AMD GPUs support! v1.0.1*
 
 ### What is the light-node supposed to do?

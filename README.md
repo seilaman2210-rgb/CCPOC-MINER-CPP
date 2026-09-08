@@ -26,4 +26,4 @@ e.g. "./plotter_cpu 1 8"
 
 ### Requirements
 
->> You need the wallet.json created by PoC-Mini-Miner.py at the same folder the plotter is.
+> You need the wallet.json created by PoC-Mini-Miner.py at the same folder the plotter is.

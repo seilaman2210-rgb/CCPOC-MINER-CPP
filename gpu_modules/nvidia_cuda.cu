@@ -12,11 +12,6 @@
 
 #include "nvidia_cuda.h"
 
-// =====================================================================
-// NVIDIA CUDA GPU plotting module
-// Port of the Intel Arc / Level Zero backend (intel_arc.cpp) to CUDA.
-// =====================================================================
-
 struct NvidiaCudaDevice {
     int device_id = -1;
     bool available = false;
@@ -47,7 +42,6 @@ bool init_cuda() {
         return false;
     }
 
-    // Pick device 0 (could be extended to pick the best by compute capability/mem).
     int chosen = 0;
     cudaDeviceProp props{};
     err = cudaGetDeviceProperties(&props, chosen);
@@ -79,10 +73,6 @@ void shutdown_cuda() {
     g_cuda_device = {};
     g_cuda_initialized = false;
 }
-
-// ---------------------------------------------------------------------
-// SHA-256 CUDA kernel (device-side port of the Level Zero OpenCL-style kernel)
-// ---------------------------------------------------------------------
 
 __device__ __constant__ uint32_t d_k[64] = {
     0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
@@ -153,10 +143,6 @@ __global__ void sha256_batch_kernel(const uint8_t* __restrict__ inputs,
     }
 }
 
-// ---------------------------------------------------------------------
-// Host-side batch entry point — same signature/semantics as the
-// Intel Arc version so plotter.cpp can call it interchangeably.
-// ---------------------------------------------------------------------
 bool cuda_generate_scoops(const uint8_t* account_id, uint32_t nonce, uint32_t count,
                            uint32_t total_scoops, std::vector<std::vector<uint8_t>>& results) {
     if (!g_cuda_device.available) return false;

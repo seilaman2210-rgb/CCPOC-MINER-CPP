@@ -18,10 +18,8 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include <sys/statvfs.h>
-
 #include <json-c/json.h>
 #include <openssl/sha.h>
-#include "gpu_modules/intel_arc.h"
 
 const uint32_t SCOOP_SIZE = 32;
 const uint32_t SCOOPS_PER_NONCE = 8192;
@@ -232,6 +230,47 @@ static uint64_t plot_total_size(uint64_t total_scoops) {
 
 static uint32_t plot_scoop_count(double size_gb) {
     return std::max<uint32_t>(1, static_cast<uint32_t>((size_gb * 1024.0 * 1024.0 * 1024.0) / SCOOP_SIZE));
+}
+
+static std::vector<uint8_t> generate_v3_scoops_abs(const std::vector<uint8_t>& account_id,
+                                                   uint64_t first_nonce,
+                                                   uint64_t scoop_start,
+                                                   uint32_t count) {
+    std::vector<uint8_t> result(count * 32);
+    std::vector<uint8_t> base(32);
+    std::vector<uint8_t> combined(36);
+    uint32_t out_i = 0;
+    uint64_t g = scoop_start;
+    const uint64_t end = scoop_start + count;
+    uint64_t last_nonce = UINT64_MAX;
+    while (g < end) {
+        uint64_t nonce_val = first_nonce + g / SCOOPS_PER_NONCE;
+        if (nonce_val != last_nonce) {
+            uint32_t nb[1] = { static_cast<uint32_t>(nonce_val) };
+            std::vector<uint8_t> base_input;
+            base_input.reserve(account_id.size() + 4);
+            base_input.insert(base_input.end(), account_id.begin(), account_id.end());
+            base_input.insert(base_input.end(),
+                              reinterpret_cast<uint8_t*>(nb),
+                              reinterpret_cast<uint8_t*>(nb) + 4);
+            base = sha256(base_input);
+            last_nonce = nonce_val;
+        }
+        uint32_t offset_in_nonce = static_cast<uint32_t>(g % SCOOPS_PER_NONCE);
+        uint64_t take = std::min<uint64_t>(SCOOPS_PER_NONCE - offset_in_nonce, end - g);
+        for (uint64_t j = 0; j < take; ++j) {
+            memcpy(combined.data(), base.data(), 32);
+            uint32_t idxv = offset_in_nonce + static_cast<uint32_t>(j);
+            combined[32] = idxv & 0xFF;
+            combined[33] = (idxv >> 8) & 0xFF;
+            combined[34] = (idxv >> 16) & 0xFF;
+            combined[35] = (idxv >> 24) & 0xFF;
+            std::vector<uint8_t> hash = sha256(combined);
+            memcpy(result.data() + out_i++ * 32, hash.data(), 32);
+        }
+        g += take;
+    }
+    return result;
 }
 
 static std::vector<uint8_t> generate_v3_scoops(const std::vector<uint8_t>& account_id, uint32_t nonce, uint32_t count) {
@@ -555,48 +594,29 @@ static bool create_plot_file(const std::string& plot_path, const std::string& pl
         const uint32_t BATCH = 500000;
         int last_log = -1;
 
-        bool use_gpu = is_intel_arc_available();
-        if (use_gpu) {
-            std::cout << "  [HASH] Using Intel Arc GPU for SHA-256 hashing..." << std::endl;
-        }
-
         std::ofstream lf(leaf_path, leaf_count > 0 ? std::ios::binary | std::ios::app : std::ios::binary);
         while (leaf_count < total_scoops) {
             uint32_t batch = static_cast<uint32_t>(std::min<uint64_t>(BATCH, total_scoops - leaf_count));
 
-            if (use_gpu) {
-                std::vector<std::vector<uint8_t>> gpu_results;
-                if (gpu_generate_scoops(account.data(), static_cast<uint32_t>(first_nonce + leaf_count / SCOOPS_PER_NONCE), batch, total_scoops, gpu_results)) {
-                    for (size_t i = 0; i < gpu_results.size() && leaf_count + i < total_scoops; ++i) {
-                        lf.write(reinterpret_cast<const char*>(gpu_results[i].data()), gpu_results[i].size());
-                    }
-                    leaf_count += batch;
-                } else {
-                    use_gpu = false;
-                    std::cout << "\n  [HASH] GPU failed, falling back to CPU..." << std::endl;
-                    continue;
-                }
-            } else {
-                uint32_t chunk_size = std::max<uint32_t>(1, batch / workers);
+            uint32_t chunk_size = std::max<uint32_t>(1, batch / workers);
 
-                std::vector<std::thread> threads;
-                std::vector<std::vector<uint8_t>> results(workers);
-                for (int w = 0; w < workers; ++w) {
-                    uint32_t offset = w * chunk_size;
-                    uint32_t cs = (w < workers - 1) ? chunk_size : (batch - offset);
-                    if (cs == 0) break;
-                    threads.emplace_back([&, w, offset, cs]() {
-                        results[w] = generate_v3_scoops(account, first_nonce + (leaf_count + offset) / SCOOPS_PER_NONCE, cs);
-                    });
-                }
-                for (auto& t : threads) t.join();
-
-                for (int w = 0; w < workers && w < results.size(); ++w) {
-                    if (!results[w].empty()) lf.write(reinterpret_cast<const char*>(results[w].data()), results[w].size());
-                }
-
-                leaf_count += batch;
+            std::vector<std::thread> threads;
+            std::vector<std::vector<uint8_t>> results(workers);
+            for (int w = 0; w < workers; ++w) {
+                uint32_t offset = w * chunk_size;
+                uint32_t cs = (w < workers - 1) ? chunk_size : (batch - offset);
+                if (cs == 0) break;
+                threads.emplace_back([&, w, offset, cs]() {
+                    results[w] = generate_v3_scoops_abs(account, first_nonce, leaf_count + offset, cs);
+                });
             }
+            for (auto& t : threads) t.join();
+
+            for (int w = 0; w < workers && w < results.size(); ++w) {
+                if (!results[w].empty()) lf.write(reinterpret_cast<const char*>(results[w].data()), results[w].size());
+            }
+
+            leaf_count += batch;
 
             if (progress) {
                 int pct = static_cast<int>((leaf_count * 100) / total_scoops);
@@ -685,7 +705,6 @@ static bool create_plot_file(const std::string& plot_path, const std::string& pl
             root_bytes = std::vector<uint8_t>(32, 0);
         }
 
-        std::remove(leaf_path.c_str());
         try { std::remove(input_path.c_str()); } catch (...) {}
 
         auto t2 = std::chrono::high_resolution_clock::now();
@@ -896,12 +915,6 @@ int main(int argc, char* argv[]) {
         priv_key_32 = wallet.private_key_bytes;
     }
 
-    if (is_intel_arc_available()) {
-        std::cout << "[PLOT] Intel Arc GPU enabled for hashing" << std::endl;
-    } else {
-        std::cout << "[PLOT] Intel Arc GPU not available, using CPU" << std::endl;
-    }
-
     struct stat st;
     if (stat(outdir.c_str(), &st) != 0) {
 #ifdef _WIN32
@@ -923,8 +936,6 @@ int main(int argc, char* argv[]) {
     std::vector<uint8_t> account_id = resolve_account_id(wallet);
 
     bool ok = create_plot_file(plot_path, plot_id, miner_address, size_gb, account_id, true, false);
-
-    shutdown_intel_arc();
 
     return ok ? 0 : 1;
 }

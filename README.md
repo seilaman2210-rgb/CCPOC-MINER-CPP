@@ -12,7 +12,7 @@ AMD Support Next Patch
 
 ### Status:
 
-> *Plotter.cpp » Possibly done, Future changes should include AMD GPUs support! v1.0.1*
+> *Plotter.cpp » Possibly done, Future changes should include AMD GPUs support! v1.0.2*
 
 ### How to run:
 

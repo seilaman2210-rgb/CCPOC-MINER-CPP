@@ -233,10 +233,6 @@ static uint32_t plot_scoop_count(double size_gb) {
     return std::max<uint32_t>(1, static_cast<uint32_t>((size_gb * 1024.0 * 1024.0 * 1024.0) / SCOOP_SIZE));
 }
 
-// Reference-matching leaf generation (Python _hash_scoop_range): for each
-// absolute scoop index g, base = sha256(account_id || le32(first_nonce+g/8192))
-// and leaf = sha256(base || le32(g%8192)), so leaves are produced in exact
-// absolute scoop order regardless of chunk boundaries.
 static std::vector<uint8_t> generate_v3_scoops_abs(const std::vector<uint8_t>& account_id,
                                                    uint64_t first_nonce,
                                                    uint64_t scoop_start,
@@ -716,7 +712,6 @@ static bool create_plot_file(const std::string& plot_path, const std::string& pl
             root_bytes = std::vector<uint8_t>(32, 0);
         }
 
-        // keep leaf file: it _is_ the plot data section, reused by WRIT below
         try { std::remove(input_path.c_str()); } catch (...) {}
 
         auto t2 = std::chrono::high_resolution_clock::now();
